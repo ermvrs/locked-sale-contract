@@ -1,0 +1,28 @@
+{
+  "name": "robinia-locked-sale",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "migrate": "truffle migrate --network bscTestnet --reset",
+    "compile": "truffle compile --network bscTestnet",
+    "migrate:testnet": "truffle migrate --network testnet --reset",
+    "migrate:bsc": "truffle migrate --network bsc --reset"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ermvrs/robinia-locked-sale.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ermvrs/robinia-locked-sale/issues"
+  },
+  "homepage": "https://github.com/ermvrs/robinia-locked-sale#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.4.0",
+    "@truffle/hdwallet-provider": "^2.0.0",
+    "dotenv": "^10.0.0"
+  }
+}
