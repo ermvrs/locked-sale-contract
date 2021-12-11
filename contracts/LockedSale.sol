@@ -18,7 +18,8 @@ contract LockedSale is Ownable {
     uint256 saleBP = 1000; // sale base point 100 -> 1%
     uint256 minAmount = 0.01 ether;
     bool saleActive = true;
-    uint256 claimTime = 1 hours;
+    uint256 claimTime = 50; // 200 blocks
+    uint256 soldAmount = 0;
 
     IBEP20 public token; // token for sale
     IPancakeRouter01 public router;
@@ -34,26 +35,25 @@ contract LockedSale is Ownable {
     }
 
     function buyToken(uint256 _amount, IBEP20 _spendingToken) public onlySaleActive {
-        require(msg.sender != address(0) ,"Sender address zero.");
+        // _amount RBS to buy
+        require(msg.sender != address(0),"Spender address zero.");
         require(whiteListedTokens[address(_spendingToken)] == true, "This token is not whitelisted.");
+        require(_amount >= minAmount, "amount too low.");
         uint256 contractBalance = getContractBalance();
-        // require(_amount <= contractBalance, "Requested amount is too much.");
-        uint256 currentAmount = getAmountOut(_spendingToken, _amount);
-        uint256 saleAddition = currentAmount.mul(saleBP).div(10000);
-        uint256 totalTokenAmount = currentAmount.add(saleAddition);
-        require(totalTokenAmount >= minAmount, "Total Token amount too low.");
-        require(totalTokenAmount <= contractBalance, "Requested amount is too much.");
-        _spendingToken.safeTransferFrom(msg.sender, receiver, _amount);
+        require(_amount <= contractBalance,"amount too high.");
+        uint256 currentPrice = getAmountOut(_spendingToken, _amount); // currenPrice means total busd or wbnb have to paid to buy that amount from lp
+        uint256 saleDiscount = currentPrice.mul(saleBP).div(10000);
+        uint256 discountedPrice = currentPrice.sub(saleDiscount);
+        _spendingToken.safeTransferFrom(msg.sender, receiver, discountedPrice);
         Claim[] storage claims = claimList[msg.sender];
         claims.push(Claim({
-            amount : totalTokenAmount,
-            claimBlock : block.timestamp.add(claimTime),
+            amount : _amount,
+            claimBlock : block.number.add(claimTime),
             claimed : false
         }));
-        //claimList[msg.sender].push(});
-        //token.safeTransfer(msg.sender, totalTokenAmount);
-
-        emit TokenBought(_spendingToken,_amount,totalTokenAmount);
+        soldAmount = soldAmount.add(_amount);
+        
+        emit TokenBought(_spendingToken,_amount, discountedPrice);
     }
 
 
@@ -62,14 +62,15 @@ contract LockedSale is Ownable {
         require(msg.sender != address(0), "Sender address zero.");
         Claim memory claim = claimList[msg.sender][_cid];
         require(claim.claimed == false, "Already claimed");
-        uint256 currBlock = block.timestamp;
+        require(claim.amount > 0, "Claim amount zero");
+        uint256 currBlock = block.number;
         require(currBlock >= claim.claimBlock, "You have to wait.");
         uint256 amount = claim.amount;
         delete claimList[msg.sender][_cid];
         // eğer yukarıdaki çalışmazsa
         // claimList[msg.sender][_cid].claimed = true;
         token.safeTransfer(msg.sender, amount);
-
+        soldAmount = soldAmount.sub(amount);
         emit TokensClaimed(amount);
     }
 
@@ -78,23 +79,25 @@ contract LockedSale is Ownable {
     function pathMaker(IBEP20 _spendingToken) internal view returns(address[] memory) {
         address[] memory path;
         path = new address[](2);
-        path[0] = address(_spendingToken);
-        path[1] = address(token);
+        path[0] = address(token);
+        path[1] = address(_spendingToken);
         return path;
     }
 
     // view functions
 
-    function getUsersClaims() public view returns(Claim[] memory) {
-        require(msg.sender != address(0), "Address zero.");
+    function getUsersClaims(address _user) public view returns(Claim[] memory) {
+        require(_user != address(0), "Address zero.");
 
-        Claim[] memory claims = claimList[msg.sender];
+        Claim[] memory claims = claimList[_user];
         return claims;
     }
 
     function getContractBalance() public view returns(uint256) {
         uint256 balance = token.balanceOf(address(this));
-        return balance;
+        require(balance >= soldAmount, "Sold amount higher");
+        uint256 available = balance.sub(soldAmount);
+        return available;
     }
 
     function getAmountOut(IBEP20 _spendingToken, uint256 _amount) public view returns(uint256) {
@@ -104,11 +107,13 @@ contract LockedSale is Ownable {
     }
 
     function getTokensOut(IBEP20 _spendingToken, uint256 _amount) public view returns(uint256) {
+        // kullanıcı rbs miktarını yazacak ve ne kadar ödeyeceğini döndürecek
         address[] memory path = pathMaker(_spendingToken);
         uint256[] memory amounts = router.getAmountsOut(_amount, path);
-        uint256 saleAddition = amounts[1].mul(saleBP).div(10000);
-        uint256 totalTokenAmount = amounts[1].add(saleAddition);
-        return totalTokenAmount;
+        uint256 payAmount = amounts[1];
+        uint256 saleDiscount = payAmount.mul(saleBP).div(10000);
+        uint256 discountedPrice = payAmount.sub(saleDiscount);
+        return discountedPrice;
     }
 
 
@@ -149,6 +154,10 @@ contract LockedSale is Ownable {
         receiver = _recv;
 
         emit ReceiverAddressChanged(_recv);
+    }
+
+    function withdrawTokens(uint256 _amount) public onlyOwner {
+        token.safeTransfer(msg.sender, _amount);
     }
 
     // modifiers
