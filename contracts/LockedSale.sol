@@ -4,8 +4,9 @@ import "./Ownable.sol";
 import "./IBEP20.sol";
 import "./SafeBEP20.sol";
 import "./IPancakeRouter01.sol";
+import "./ReentrancyGuard.sol";
 
-contract LockedSale is Ownable {
+contract LockedSale is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeBEP20 for IBEP20;
 
@@ -15,17 +16,17 @@ contract LockedSale is Ownable {
         bool claimed;
     }
 
-    uint256 saleBP = 1000; // sale base point 100 -> 1%
-    uint256 minAmount = 0.01 ether;
-    bool saleActive = true;
-    uint256 claimTime = 50; // 200 blocks
-    uint256 soldAmount = 0;
+    uint256 public saleBP = 1000; // sale base point 100 -> 1%
+    uint256 public minAmount = 0.01 ether;
+    bool public saleActive = true;
+    uint256 public claimTime = 50; // 200 blocks
+    uint256 public soldAmount = 0;
 
     IBEP20 public token; // token for sale
     IPancakeRouter01 public router;
     address public receiver; // sale funds go to.
     // wbnb , busd
-    mapping(address => bool) whiteListedTokens;
+    mapping(address => bool) public whiteListedTokens;
     mapping(address => Claim[]) claimList;
 
     constructor(IBEP20 _token, IPancakeRouter01 _router, address _recv) {
@@ -34,7 +35,7 @@ contract LockedSale is Ownable {
         receiver = _recv;
     }
 
-    function buyToken(uint256 _amount, IBEP20 _spendingToken) public onlySaleActive {
+    function buyToken(uint256 _amount, IBEP20 _spendingToken) public onlySaleActive nonReentrant {
         // _amount RBS to buy
         require(msg.sender != address(0),"Spender address zero.");
         require(whiteListedTokens[address(_spendingToken)] == true, "This token is not whitelisted.");
@@ -58,10 +59,10 @@ contract LockedSale is Ownable {
 
 
     // _cid => claim id, claim index in array
-    function claimTokens(uint64 _cid) public {
+    function claimTokens(uint64 _cid) public nonReentrant {
         require(msg.sender != address(0), "Sender address zero.");
         Claim memory claim = claimList[msg.sender][_cid];
-        require(claim.claimed == false, "Already claimed");
+        require(claim.claimed == false, "Already claimed"); // unnecessary can be removed
         require(claim.amount > 0, "Claim amount zero");
         uint256 currBlock = block.number;
         require(currBlock >= claim.claimBlock, "You have to wait.");
