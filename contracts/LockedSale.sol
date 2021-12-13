@@ -93,6 +93,12 @@ contract LockedSale is Ownable {
         return claims;
     }
 
+    function getClaim(address _user, uint256 _cid) public view returns(Claim memory) {
+        require(_user != address(0),"Address zero.");
+        
+        return claimList[_user][_cid];
+    }
+
     function getContractBalance() public view returns(uint256) {
         uint256 balance = token.balanceOf(address(this));
         require(balance >= soldAmount, "Sold amount higher");
@@ -158,6 +164,10 @@ contract LockedSale is Ownable {
 
     function withdrawTokens(uint256 _amount) public onlyOwner {
         token.safeTransfer(msg.sender, _amount);
+    }
+
+    function changeSoldAmount(uint256 _newAmount) public onlyOwner {
+        soldAmount = _newAmount;
     }
 
     // modifiers
