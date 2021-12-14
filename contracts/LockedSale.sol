@@ -15,11 +15,11 @@ contract LockedSale is Ownable {
         bool claimed;
     }
 
-    uint256 saleBP = 1000; // sale base point 100 -> 1%
-    uint256 minAmount = 0.01 ether;
-    bool saleActive = true;
-    uint256 claimTime = 50; // 200 blocks
-    uint256 soldAmount = 0;
+    uint256 public saleBP = 1000; // sale base point 100 -> 1%
+    uint256 public minAmount = 0.01 ether;
+    bool public saleActive = true;
+    uint256 public claimTime = 50; // 200 blocks
+    uint256 public soldAmount = 0;
 
     IBEP20 public token; // token for sale
     IPancakeRouter01 public router;
@@ -93,6 +93,12 @@ contract LockedSale is Ownable {
         return claims;
     }
 
+    function getClaim(address _user, uint256 _cid) public view returns(Claim memory) {
+        require(_user != address(0),"Address zero.");
+        
+        return claimList[_user][_cid];
+    }
+
     function getContractBalance() public view returns(uint256) {
         uint256 balance = token.balanceOf(address(this));
         require(balance >= soldAmount, "Sold amount higher");
@@ -158,6 +164,10 @@ contract LockedSale is Ownable {
 
     function withdrawTokens(uint256 _amount) public onlyOwner {
         token.safeTransfer(msg.sender, _amount);
+    }
+
+    function changeSoldAmount(uint256 _newAmount) public onlyOwner {
+        soldAmount = _newAmount;
     }
 
     // modifiers
