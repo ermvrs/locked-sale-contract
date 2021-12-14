@@ -3,3 +3,4 @@ migrations
 package-lock.json
 .env
 build
+yarn.lock

@@ -1,0 +1,32 @@
+Claim struct {
+    uint256 amount,
+    uint256 claimBlock,
+    bool claimed, => her zaman false olacaktır. claim edildiğinde bu claim silinir.
+}
+
+View Functions
+
+getUsersClaims(address _user) => Returns users claims as list of claim
+
+Not : Kullanıcının claimlerini listelerken, ödemesi alınan claimler sıfırlandığından amount > 0 kontrolü kullanılmalı.
+
+getClaim(address _user, uint64 _cid) => kullanıcının claimi döndürür.
+
+Not : cid değeri index değeri 0 dan başlayarak 1 er 1 er artar.
+
+getContractBalance()
+
+Kontratta alınabilecek max rbs miktarını döndürür.
+
+Write Functions
+
+buyToken(uint256 _amount, IBEP20 _spendingToken)
+=> Spending token olarak ödenecek token adresi girilmeli, bu token kontratta whitelisted olmalı. Örnek wbnb için 0xbb4..... gibi kontrat adresi.
+=> Amount alınmak istenen rbs miktarı.
+
+Return değeri dönmez. İşlem başarılı ise kullanıcının claimi getUsersClaims ile sorgulanabilir olur ve bu claime bir cid değeri atanır.
+
+claimTokens(uint64 _cid)
+=>Cid değeri kullanıcının claiminin index numarasıdır. 0,1,2,3,... gibi artara gider. Transactionu gönderen kişinin adresinden claim sorgulaması yapılır.
+Eğer claime uygun ise aldığı rbsler kullanıcıya gönderilir. Alınacak rbs miktarını getClaim viewı ile çekilebilir.
+
