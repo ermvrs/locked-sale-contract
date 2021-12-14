@@ -5,7 +5,7 @@ import "./IBEP20.sol";
 import "./SafeBEP20.sol";
 import "./IPancakeRouter01.sol";
 import "./ReentrancyGuard.sol";
-
+// contract
 contract LockedSale is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeBEP20 for IBEP20;
