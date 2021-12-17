@@ -141,6 +141,10 @@ contract LockedSale is Ownable, ReentrancyGuard {
         whiteListedTokens[address(_token)] = true;
     }
 
+    function discardSpendingToken(IBEP20 _token) public onlyOwner {
+        whiteListedTokens[address(_token)] = false;
+    }
+
     function toggleSaleStatus() public onlyOwner {
         saleActive = !saleActive;
     }

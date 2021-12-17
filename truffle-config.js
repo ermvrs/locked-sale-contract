@@ -16,7 +16,7 @@ module.exports = {
       confirmations: 2,
       timeoutBlocks: 200,
       skipDryRun: true,
-      from: '0x6Ff850ae284951787216dbc9880e6573c53Ab822',
+      from: '0x37B4Ef9c27c50B53a47b84B05C4688BB7ADB7AC0',
     },
     bsc: {
       provider: () => new HDWalletProvider(DEPLOYER, `https://bsc-dataseed1.defibit.io/`),
@@ -24,7 +24,7 @@ module.exports = {
       confirmations: 5,
       timeoutBlocks: 200,
       skipDryRun: true,
-      from: '0x6Ff850ae284951787216dbc9880e6573c53Ab822', // deployer address ytazılacak,
+      from: '0x37B4Ef9c27c50B53a47b84B05C4688BB7ADB7AC0', // deployer address ytazılacak,
       gasPrice : 5000010000
     },
   },
